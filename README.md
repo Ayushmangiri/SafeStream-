@@ -24,6 +24,6 @@ images using AI — keeping your feed clean and safe.
 
 ## Project Structure
 SafeStream/
-├── backend/     → FastAPI server
+├── backend/     → Node server
 ├── frontend/    → React app
 └── docs/        → Documentation# SafeStream 
