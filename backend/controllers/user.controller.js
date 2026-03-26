@@ -150,6 +150,92 @@ const logoutUser = async (req, res) => {
   } catch (error) {}
 };
 
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      users,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const updateProfile=async (req,res)=>{
+  const {newEmail,newName}=req.body;
+  if(!newEmail || !newName)
+  {
+    return res.status(400).json({
+      success:false,
+      message:"Nothing to Update"
+    });
+  }
+ try{
+  const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,                 // from Jwt
+      {
+        $set: {
+          email: newEmail,
+          name: newName,
+        },
+      },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      user: updatedUser,
+    });
 
 
-export { registerUser, login, getMe, logoutUser };
+
+ } catch(err){
+  res.status(400).json({
+    message:err.message,
+    success:false,
+  })
+ }
+}
+
+
+const deleteUserByAdmin = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await User.findByIdAndDelete(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+
+export { registerUser, login, getMe, logoutUser, getAllUsers, updateProfile, deleteUserByAdmin };
