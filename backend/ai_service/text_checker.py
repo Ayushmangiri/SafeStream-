@@ -61,10 +61,16 @@ async def check_text(text: str) -> dict:
         # Extract the toxicity score
         # The model returns scores for different labels, we take the 'toxic' label
         toxic_score = 0.0
-        for pred in predictions[0]:
-            if pred['label'].lower() == 'toxic':
-                toxic_score = pred['score']
-                break
+        if isinstance(predictions, list) and len(predictions) > 0:
+            result = predictions[0] if isinstance(predictions[0], list) else predictions
+            if isinstance(result, list):
+                for pred in result:
+                    if pred.get('label', '').lower() == 'toxic':
+                        toxic_score = pred.get('score', 0.0)
+                        break
+            else:
+                if result.get('label', '').lower() == 'toxic':
+                    toxic_score = result.get('score', 0.0)
 
         # Determine status based on score
         if toxic_score < 0.3:
