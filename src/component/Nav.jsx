@@ -93,7 +93,7 @@ const Nav = () => {
         </div>
           :
         <span onClick={handleLogOut} 
-        className="px-[20px] py-[10px] bg-white   text-black font-semibold rounded-[10px] cursor-pointer hover:scale-105 transition-all duration-200 active:scale-95">LogOut</span>}
+        className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-700 text-black rounded-lg font-semibold hover:scale-105 transition">LogOut</span>}
 
         
 
