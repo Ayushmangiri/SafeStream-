@@ -5,6 +5,9 @@ import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { IoIosEye } from "react-icons/io";
 import { IoMdEyeOff } from "react-icons/io";
+import { useDispatch } from "react-redux";
+import {setUserData}  from "../redux/userSlice.js"
+
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,6 +16,10 @@ function Login() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+
+  const dispatch = useDispatch(); 
+
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -23,6 +30,8 @@ function Login() {
 
       const data = result.data;
       console.log(data);
+      
+      dispatch(setUserData(data?.user || null));          // Update Redux store with user data
 
       toast.success(data?.message || "Login Successful ");
 

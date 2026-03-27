@@ -4,19 +4,22 @@ import { Toaster } from "react-hot-toast";
 import Signup from './pages/signup.jsx'
 import Home from './pages/home.jsx'
 import Login from './pages/login.jsx'
-
-
 import './App.css'
+import getCurrentUser from './customeHooks/getCurrentUser.js';
+import { useSelector } from 'react-redux';
+import { Navigate } from 'react-router-dom';
 
 function App() {
-  const [count, setCount] = useState(0)
+  getCurrentUser();
+
+  const {userData}=useSelector((state)=>state.user)
 
   return (
     <>
       <Routes>
         <Route path='/' element={<Home/>} />
-        <Route path='/signup' element={<Signup/>} />
-        <Route path='/login' element={<Login/>} />
+        <Route path='/signup' element={!userData ? <Signup/> : <Navigate to='/' /> } />
+        <Route path='/login' element={!userData ? <Login/> : <Navigate to='/' />} />
       </Routes>
 
       <Toaster
