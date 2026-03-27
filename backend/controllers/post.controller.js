@@ -1,5 +1,6 @@
 import Post from "../model/Post.model.js";
-import { checkText, checkImage } from "../services/ml.services.js";
+import { checkText, checkImage } from "../services/ml.services.js"; //include here checkContent here
+
 
 const createPost = async (req, res) => {
   try {
@@ -56,6 +57,56 @@ const createPost = async (req, res) => {
   }
 };
 
+//replace above by this when i integrate ml model
+// const createPost = async (req, res) => {
+//   try {
+//     const { text } = req.body;
+//     const image = req.file?.path;
+
+//     if (!text && !image) {
+//       return res.status(400).json({
+//         message: "Post must contain text or image",
+//       });
+//     }
+
+//     //  here we send to ml
+//     const result = await checkContent(text, image);
+
+//     console.log("ML Result:", result);
+
+//     let status = "safe";
+
+//     if (result.text === "flagged" || result.image === "flagged") {
+//       status = "flagged";
+//     }
+
+//     if (result.text === "rejected" || result.image === "rejected") {
+//       return res.status(400).json({
+//         message: "Content not appropriate",
+//       });
+//     }
+
+//     const post = await Post.create({
+//       user: req.user.id,
+//       text,
+//       image,
+//       status,
+//     });
+
+//     res.status(201).json({
+//       success: true,
+//       message: "Post created",
+//       post,
+//     });
+
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({
+//       message: "Error creating post",
+//     });
+//   }
+// };
+
 const getFeed = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -94,26 +145,34 @@ const getFlaggedPosts = async (req, res) => {
 const updatePostStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { action } = req.body;
 
-    if (!["safe", "flagged", "rejected"].includes(status)) {
+    let update = {};
+
+    if (action === "accept") {
+      update.status = "safe";
+    } else if (action === "delete") {
+      await Post.findByIdAndDelete(id);
+
+      return res.json({
+        message: "Post deleted",
+      });
+    } else {
       return res.status(400).json({
-        message: "Invalid status value",
+        message: "Invalid action",
       });
     }
-    const post = await Post.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true }
-    );
 
-    res.status(200).json({
-      message: "Post updated",
+    const post = await Post.findByIdAndUpdate(id, update, { new: true });
+
+    res.json({
+      message: "Post approved",
       post,
     });
+
   } catch (error) {
     res.status(500).json({
-      message: "Error updating post",
+      message: "Error moderating post",
     });
   }
 };

@@ -14,3 +14,23 @@ export const checkImage = async (imageUrl) => {
 
   return "safe";
 };
+
+
+//when i actually integrate ml model then replace above by this
+// import axios from "axios";
+
+// export const checkContent = async (text, imageUrl) => {
+//   try {
+//     const response = await axios.post("http://localhost:5000/check", {
+//       text,
+//       image: imageUrl,
+//     });
+
+//     return response.data;
+//   } catch (error) {
+//     console.log("ML Error:", error.message);
+
+//     // fallback (important)
+//     return { text: "safe", image: "safe" };
+//   }
+// };
