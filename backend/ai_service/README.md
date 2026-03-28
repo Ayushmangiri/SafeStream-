@@ -1,146 +1,87 @@
 # SafeStream AI Service
 
-An AI-powered content moderation microservice built with Python and FastAPI.
+SafeStream is an AI-based content moderation service built using FastAPI. It evaluates user content (text, image, or both) and determines whether it is safe or requires manual review.
+
+---
 
 ## Features
 
-- **Text Moderation**: Detects toxic/abusive language using toxic-bert model
-- **Image Moderation**: Detects NSFW/inappropriate content using Google Vision API
-- **Confidence Scores**: All responses include clear confidence scores (0.0-1.0)
-- **Decision Logic**: Automatic SAFE/REVIEW/TOXIC status based on scores
-- **Async Processing**: Asynchronous endpoints for better performance
-- **Error Handling**: Graceful error handling with fallback to REVIEW status
+* Single API for text, image (URL), and combined input
+* Text moderation using toxic-bert
+* Image moderation using CLIP
+* Context-aware text handling
+* Fail-safe logic (unsafe or processing failure → review)
+
+---
+
+## API
+
+### POST /moderate
+
+**Request**
+
+```json
+{
+  "text": "your text here",
+  "image_url": "image_url_or_null"
+}
+```
+
+**Response**
+
+```json
+{
+  "status": "SAFE" | "REVIEW",
+  "confidence": float,
+  "text_result": {...},
+  "image_result": {...},
+  "final_reason": string
+}
+```
+
+---
 
 ## Decision Logic
 
-- Score 0.0 - 0.3: **SAFE** (auto approve)
-- Score 0.3 - 0.7: **REVIEW** (human moderator)
-- Score 0.7 - 1.0: **TOXIC/NSFW** (auto reject)
+* **Text Moderation**:
 
-## Setup
+  * Score < 0.5 → SAFE
+  * Score ≥ 0.5 → REVIEW
 
-1. **Install Dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+* **Image Moderation**:
 
-2. **Google Vision API Setup** (Windows):
-   - Create a Google Cloud Project
-   - Enable Vision API
-   - Create a service account and download the JSON key
-   - Set environment variable: `set GOOGLE_APPLICATION_CREDENTIALS=C:\path\to\key.json`
+  * Score < 0.6 → SAFE
+  * Score ≥ 0.6 → REVIEW
 
-   (Linux/Mac: `export GOOGLE_APPLICATION_CREDENTIALS=path/to/key.json`)
+* **Final Decision**:
 
-3. **Run the Service**:
-   ```bash
-   python main.py
-   ```
-   The service will start on `http://localhost:8001`
+  * If text or image is unsafe → REVIEW
+  * If image processing fails → REVIEW
+  * Otherwise → SAFE
 
-## API Endpoints
+---
 
-### POST /moderate/text
-Moderate text content.
+## Run Locally
 
-**Request Body**:
-```json
-{
-  "text": "Your text content here"
-}
-```
-
-**Response**:
-```json
-{
-  "score": 0.123,
-  "status": "SAFE"
-}
-```
-
-### POST /moderate/image
-Moderate image content.
-
-**Request Body**:
-```json
-{
-  "image_data": "base64_encoded_image_data"
-}
-```
-
-**Response**:
-```json
-{
-  "score": 0.456,
-  "status": "REVIEW"
-}
-```
-
-### GET /health
-Health check endpoint.
-
-## Examples
-
-### Text Moderation Examples
-
-**Safe Text**:
 ```bash
-curl -X POST "http://localhost:8001/moderate/text" \
-     -H "Content-Type: application/json" \
-     -d '{"text": "This is a wonderful day!"}'
+uvicorn main:app --reload --port 8001
 ```
-Response: `{"score": 0.02, "status": "SAFE"}`
 
-**Toxic Text**:
-```bash
-curl -X POST "http://localhost:8001/moderate/text" \
-     -H "Content-Type: application/json" \
-     -d '{"text": "You are stupid and worthless!"}'
-```
-Response: `{"score": 0.89, "status": "TOXIC"}`
+Open:
+http://127.0.0.1:8001/docs
 
-**Empty Text (Failure Case)**:
-```bash
-curl -X POST "http://localhost:8001/moderate/text" \
-     -H "Content-Type: application/json" \
-     -d '{"text": ""}'
-```
-Response: `{"score": 0.0, "status": "SAFE", "error": "Empty text provided"}`
+---
 
-### Image Moderation Examples
+## Structure
 
-**Safe Image** (1x1 pixel):
-```bash
-curl -X POST "http://localhost:8001/moderate/image" \
-     -H "Content-Type: application/json" \
-     -d '{"image_data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="}'
-```
-Response: `{"score": 0.1, "status": "SAFE"}`
+* main.py
+* text_checker.py
+* image_checker.py
+* ai_moderator.py
 
-**Invalid Image Data (Failure Case)**:
-```bash
-curl -X POST "http://localhost:8001/moderate/image" \
-     -H "Content-Type: application/json" \
-     -d '{"image_data": "invalid_base64"}'
-```
-Response: `{"score": 0.0, "status": "REVIEW", "error": "Invalid base64 image data"}`
+---
 
-## Architecture
+## Notes
 
-- `main.py`: FastAPI application with endpoints
-- `text_checker.py`: Text moderation using HuggingFace toxic-bert
-- `image_checker.py`: Image moderation using Google Cloud Vision
-- `requirements.txt`: Python dependencies
-
-## Error Handling
-
-- All errors are caught and logged
-- On failure, defaults to "REVIEW" status to ensure human moderation
-- Error messages are included in responses for debugging
-- HTTP 500 errors for unexpected server issues
-
-## Performance
-
-- Asynchronous processing for concurrent requests
-- Model caching to avoid reloading
-- Efficient base64 decoding and API calls
+* Image input must be a valid public URL
+* System follows a conservative moderation approach
