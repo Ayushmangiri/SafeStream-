@@ -112,7 +112,7 @@ const getFeed = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 5;
 
-    const posts = await Post.find({ status: "safe" })
+    const posts = await Post.find({ status: "safe" }).populate("user")
       .skip((page - 1) * limit)
       .limit(limit)
       .sort({ createdAt: -1 });
