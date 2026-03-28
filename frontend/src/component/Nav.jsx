@@ -39,26 +39,6 @@ const Nav = () => {
        
        <div className="w-[30%] hidden lg:flex items-center justify-center gap-4 ">  
 
-        {/* <nav className="flex justify-between items-center px-6 md:px-16 py-4 border-b border-gray-800">
-        <h1 className="text-2xl font-bold">
-          SafeStream <span className="text-yellow-400">Platform</span>
-        </h1>
-
-        <div className="space-x-4">
-          <button
-            onClick={() => navigate("/login")}
-            className="px-4 py-2 border border-yellow-500 text-yellow-400 rounded-lg hover:bg-yellow-500 hover:text-black transition"
-          >
-            Login
-          </button>
-          <button
-            onClick={() => navigate("/signup")}
-            className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-700 text-black rounded-lg font-semibold hover:scale-105 transition"
-          >
-            Sign Up
-          </button>
-        </div>
-      </nav> */}
     
         {!userData &&<FaUserCircle onClick={()=>setShow(prev=>!prev)}
         className=" size-12  border-2 border-white rounded-full fill-white cursor-pointer"/>}
@@ -74,8 +54,6 @@ const Nav = () => {
         className="border-2 border-white rounded-full   flex items-center justify-center cursor-pointer ">
             <img src={userData?.photoUrl} className="object-cover rounded-full size-10"/>
         </div>}
-
-        {userData?.role==="educator" && <span onClick={()=>navigate("/dashboard")} className="px-[20px] py-[10px] border-2 bg-black  border-white text-white font-semibold rounded-[10px] cursor-pointer">Dashboard</span>}
 
         {!userData? <div className="space-x-4">
           <button
@@ -106,7 +84,7 @@ const Nav = () => {
           <span 
             className="bg-black text-white px-[30px] py-[10px] rounded-2xl hover:bg-gray-600"
             onClick={()=>navigate('/myenrolledcourses')}>
-              My Courses
+              My Posts
           </span>
         </div>}
        </div>
@@ -137,9 +115,10 @@ const Nav = () => {
           className="w-[60vw] h-[7vh] border-2 bg-black  border-white text-white font-semibold rounded-[10px] cursor-pointer flex items-center justify-center" onClick={()=>navigate('/profile')}>My Profile</span>
          
          <span 
-           className="w-[60vw] h-[7vh] border-2 bg-black  border-white text-white font-semibold rounded-[10px] cursor-pointer flex items-center justify-center"  onClick={()=>navigate('/myenrolledcourses')}>My Courses</span>
+           className="w-[60vw] h-[7vh] border-2 bg-black  border-white text-white font-semibold rounded-[10px] cursor-pointer flex items-center justify-center"  onClick={()=>navigate('/myenrolledcourses')}>My Posts</span>
 
-         {userData?.role==="educator" && <span onClick={()=>navigate("/dashboard")} className="w-[60vw] h-[7vh] border-2 bg-black  border-white text-white font-semibold rounded-[10px] cursor-pointer flex items-center justify-center">Dashboard</span>}
+         {!userData && <span onClick={()=>navigate("/signup")} 
+         className="w-[60vw] h-[7vh] border-2 bg-black  border-white text-white font-semibold rounded-[10px] cursor-pointer flex items-center justify-center hover:scale-105 transition-all duration-200 active:scale-95">SignUp</span>}
 
          {!userData? <span onClick={()=>navigate("/login")} 
          className="w-[60vw] h-[7vh] border-2 bg-black  border-white text-white font-semibold rounded-[10px] cursor-pointer flex items-center justify-center hover:scale-105 transition-all duration-200 active:scale-95">Login</span>:

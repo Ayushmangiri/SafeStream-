@@ -51,13 +51,11 @@ function Home() {
 
           <div className="space-x-4">
             <button
-              onClick={() => navigate("/signup")}
+              onClick={() => navigate("/feed")}
               className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-700 text-black rounded-lg font-semibold hover:scale-105 transition"
             >
               Get Started
             </button>
-
-            
           </div>
         </div>
 

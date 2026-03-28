@@ -8,6 +8,9 @@ import './App.css'
 import getCurrentUser from './customeHooks/getCurrentUser.js';
 import { useSelector } from 'react-redux';
 import { Navigate } from 'react-router-dom';
+import CreatePost from './pages/createpost.jsx';
+import Feed from './pages/feed.jsx';
+import ModeratorDashboard from './pages/Moderator.jsx';
 
 function App() {
   getCurrentUser();
@@ -20,6 +23,9 @@ function App() {
         <Route path='/' element={<Home/>} />
         <Route path='/signup' element={!userData ? <Signup/> : <Navigate to='/' /> } />
         <Route path='/login' element={!userData ? <Login/> : <Navigate to='/' />} />
+        <Route path='/create-post' element={userData ? <CreatePost/> : <Navigate to='/login' /> } />
+        <Route path='/feed' element={userData ? <Feed/> : <Navigate to='/login' /> } />
+        <Route path='/Moderator' element={userData ? <ModeratorDashboard/> : <Navigate to='/login' /> } />
       </Routes>
 
       <Toaster
