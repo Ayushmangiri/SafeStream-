@@ -1,99 +1,112 @@
-"""
-Image Moderation Module (CLIP-based)
-
-This module handles image moderation using CLIP (no billing).
-Detects NSFW / unsafe content.
-
-Decision Logic:
-- 0.0 - 0.3 → SAFE
-- 0.3 - 1.0 → REVIEW
-
-"""
-
-import base64
-import logging
-from PIL import Image
+import asyncio
+import requests
 import io
 import torch
+from PIL import Image
 from transformers import CLIPProcessor, CLIPModel
 
-logger = logging.getLogger(__name__)
-
-# Load CLIP model once (IMPORTANT)
+# Load model
 clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
 clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
-# Labels (tune for better accuracy)
 LABELS = [
-    "a safe normal image",
-    "explicit nudity",
-    "pornographic content",
-    "graphic violence",
-    "bloody scene",
-    "person holding gun",
-    "knife attack",
-    "illegal drugs"
+    "safe image",
+    "nudity",
+    "porn",
+    "violence",
+    "weapon",
+    "drugs"
 ]
 
 
-async def check_image(image_data: str) -> dict:
-    try:
-        # ✅ Validate input
-        if not image_data or not image_data.strip():
-            return {
-                "score": 0.0,
-                "status": "SAFE",
-                "error": "Empty image data provided"
-            }
+def _run_clip(image: Image.Image) -> float:
+    inputs = clip_processor(
+        text=LABELS,
+        images=image,
+        return_tensors="pt",
+        padding=True
+    )
 
-        # ✅ Decode base64
+    with torch.no_grad():
+        outputs = clip_model(**inputs)
+
+    probs = outputs.logits_per_image.softmax(dim=1)[0]
+    return float(max(probs.tolist()[1:]))
+
+
+async def fetch_image(image_url: str) -> Image.Image:
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "image/*"
+    }
+
+    #  Retry logic (important)
+    for attempt in range(2):
         try:
-            image_bytes = base64.b64decode(image_data)
-            image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            response = requests.get(image_url, headers=headers, timeout=8)
+            response.raise_for_status()
+
+            #  Ensure it's actually an image
+            if "image" not in response.headers.get("Content-Type", ""):
+                raise ValueError("URL did not return an image")
+
+            return Image.open(io.BytesIO(response.content)).convert("RGB")
+
         except Exception as e:
-            return {
-                "score": 0.0,
-                "status": "REVIEW",
-                "error": f"Invalid base64 image: {str(e)}"
-            }
+            print(f"[Retry {attempt+1}] IMAGE FETCH ERROR:", str(e))
 
-        # ✅ Prepare CLIP input
-        inputs = clip_processor(
-            text=LABELS,
-            images=image,
-            return_tensors="pt",
-            padding=True
-        )
+    raise Exception("Failed to fetch image after retries")
 
-        # ✅ Model inference
-        with torch.no_grad():
-            outputs = clip_model(**inputs)
 
-        probs = outputs.logits_per_image.softmax(dim=1)[0]
+async def check_image(image_url: str) -> dict:
 
-        results = dict(zip(LABELS, probs.tolist()))
+    #  Empty input
+    if not image_url or not image_url.strip():
+        return {
+            "status": "SAFE",
+            "score": 0.0,
+            "reason": "No image provided"
+        }
 
-        # ✅ Unsafe score = max of unsafe labels
-        unsafe_labels = LABELS[1:]  # skip safe label
-        max_score = max(results[label] for label in unsafe_labels)
+    #  Invalid URL
+    if not image_url.startswith("http"):
+        return {
+            "status": "ERROR",
+            "score": 1.0,
+            "reason": "Invalid image URL"
+        }
 
-        # ✅ Decision logic (FIXED)
-        if max_score < 0.3:
-            status = "SAFE"
-        elif max_score < 0.7:
-            status = "REVIEW"   
-        else:
-            status = "NSFW"
+    #  Fetch image
+    try:
+        image = await fetch_image(image_url)
+
+    except Exception as e:
+        print("FINAL IMAGE ERROR:", str(e))
 
         return {
-            "score": round(max_score, 3),
-            "status": status
+            "status": "ERROR",
+            "score": 1.0,
+            "reason": "Image could not be processed"
+        }
+
+    #  Run CLIP
+    try:
+        loop = asyncio.get_running_loop()
+        score = await loop.run_in_executor(None, _run_clip, image)
+
+        status = "REVIEW" if score >= 0.6 else "SAFE"
+
+        return {
+            "status": status,
+            "score": round(score, 4),
+            "reason": "Unsafe image detected" if status == "REVIEW" else "Safe image"
         }
 
     except Exception as e:
-        logger.error(f"Error in image moderation: {str(e)}")
+        print("MODEL ERROR:", str(e))
+
         return {
-            "score": 0.0,
-            "status": "REVIEW",
-            "error": f"Failed to moderate image: {str(e)}"
+            "status": "ERROR",
+            "score": 1.0,
+            "reason": "Model error during image analysis"
         }
