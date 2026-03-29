@@ -83,7 +83,7 @@ const Nav = () => {
           </span>
           <span 
             className="bg-black text-white px-[30px] py-[10px] rounded-2xl hover:bg-gray-600"
-            onClick={()=>navigate('/myenrolledcourses')}>
+            onClick={()=>navigate('/my-posts')}>
               My Posts
           </span>
         </div>}
@@ -115,7 +115,7 @@ const Nav = () => {
           className="w-[60vw] h-[7vh] border-2 bg-black  border-white text-white font-semibold rounded-[10px] cursor-pointer flex items-center justify-center" onClick={()=>navigate('/profile')}>My Profile</span>
          
          <span 
-           className="w-[60vw] h-[7vh] border-2 bg-black  border-white text-white font-semibold rounded-[10px] cursor-pointer flex items-center justify-center"  onClick={()=>navigate('/myenrolledcourses')}>My Posts</span>
+           className="w-[60vw] h-[7vh] border-2 bg-black  border-white text-white font-semibold rounded-[10px] cursor-pointer flex items-center justify-center"  onClick={()=>navigate('/my-posts')}>My Posts</span>
 
          {!userData && <span onClick={()=>navigate("/signup")} 
          className="w-[60vw] h-[7vh] border-2 bg-black  border-white text-white font-semibold rounded-[10px] cursor-pointer flex items-center justify-center hover:scale-105 transition-all duration-200 active:scale-95">SignUp</span>}

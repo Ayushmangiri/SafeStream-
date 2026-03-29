@@ -3,21 +3,27 @@ import axios from "axios";
 import { serverUrl } from "../main.jsx";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { setAllPosts } from "../redux/userSlice.js";
 
 function Feed() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const {userData}=useSelector((state)=>state.user)
+  const {userData,allPosts}=useSelector((state)=>state.user)
 
   const fetchPosts = async () => {
     try {
       setLoading(true);
 
       const res = await axios.get(`${serverUrl}/api/v1/posts/feed`, {withCredentials: true,});
+
+      dispatch(setAllPosts(res.data.posts || []))
+
+      console.log(res.data);
 
       setPosts(res.data.posts || []);
     } catch (error) {

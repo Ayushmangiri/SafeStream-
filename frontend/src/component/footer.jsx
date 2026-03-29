@@ -35,11 +35,6 @@ function Footer() {
             </h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link to="/" className="hover:text-yellow-400 transition">
-                  Home
-                </Link>
-              </li>
-              <li>
                 <Link to="/feed" className="hover:text-yellow-400 transition">
                   Feed
                 </Link>
@@ -47,6 +42,11 @@ function Footer() {
               <li>
                 <Link to="/create-post" className="hover:text-yellow-400 transition">
                   Create Post
+                </Link>
+              </li>
+              <li>
+                <Link to="/my-posts" className="hover:text-yellow-400 transition">
+                  My posts
                 </Link>
               </li>
               <li>
@@ -113,13 +113,13 @@ function Footer() {
               <h4 className="text-white font-medium mb-3">Follow Us</h4>
               <div className="flex items-center gap-3">
                 <a
-                  href="#"
+                  href="https://github.com/AmanSoni28"
                   className="w-10 h-10 rounded-full bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center text-yellow-400 hover:bg-yellow-500 hover:text-black transition"
                 >
                   <FaGithub />
                 </a>
                 <a
-                  href="#"
+                  href="https://www.linkedin.com/in/aman-soni-89a726331/#"
                   className="w-10 h-10 rounded-full bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center text-yellow-400 hover:bg-yellow-500 hover:text-black transition"
                 >
                   <FaLinkedin />

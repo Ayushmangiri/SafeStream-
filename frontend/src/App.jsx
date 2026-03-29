@@ -13,9 +13,12 @@ import Feed from './pages/feed.jsx';
 import ModeratorDashboard from './pages/Moderator.jsx';
 import Profile from './pages/myprofile.jsx';
 import EditProfile from './pages/editprofile.jsx';
+import MyPosts from './pages/myposts.jsx';
+import getAllPosts from './customeHooks/getAllPosts.js';
 
 function App() {
   getCurrentUser();
+  getAllPosts();
 
   const {userData}=useSelector((state)=>state.user)
 
@@ -30,6 +33,7 @@ function App() {
         <Route path='/Moderator' element={userData ? <ModeratorDashboard/> : <Navigate to='/login' /> } />
         <Route path='/profile' element={userData ? <Profile/> : <Navigate to='/login' /> } />
         <Route path='/edit-profile' element={userData ? <EditProfile/> : <Navigate to='/login' /> } />
+        <Route path='/my-posts' element={userData ? <MyPosts/> : <Navigate to='/login' /> } />
       </Routes>
 
       <Toaster
