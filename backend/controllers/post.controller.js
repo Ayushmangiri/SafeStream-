@@ -1,101 +1,52 @@
 import Post from "../model/Post.model.js";
 import { checkText, checkImage } from "../services/ml.services.js"; //include here checkContent here
+import { moderateContent } from "../services/ml.services.js"; //include here moderateContent here
 
 
-const createPost = async (req, res) => {
-  try {
-    const { text } = req.body;
-    const image = req.file?.path;
-
-
-
-    //  validation
-    if (!text && !image) {
-      return res.status(400).json({
-        message: "Post must contain text or image",
-      });
-    }
-
-    console.log("Cloudinary URL:", image);
-    console.log("Text content:", text);
-
-    // it check ML checks
-    const textResult = checkText(text);
-    const imageResult = await checkImage(image);
-
-    // for final status
-    let status = "safe";
-
-    if (textResult === "flagged" || imageResult === "flagged") {
-      status = "flagged";
-    }
-
-    if (textResult === "rejected" || imageResult === "rejected") {
-      return res.status(400).json({
-        message: "Content not appropriate",
-      });
-    }
-
-    // for save post
-    const post = await Post.create({
-      user: req.user?.id,
-      text,
-      image,
-      status,
-    });
-
-    res.status(201).json({
-      message: "Post created successfully",
-      post,
-    });
-
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      message: "Error creating post",
-    });
-  }
-};
-
-//replace above by this when i integrate ml model
 // const createPost = async (req, res) => {
 //   try {
 //     const { text } = req.body;
 //     const image = req.file?.path;
 
+//     console.log("Image URL:", image);
+
+//     //  validation
 //     if (!text && !image) {
 //       return res.status(400).json({
 //         message: "Post must contain text or image",
 //       });
 //     }
 
-//     //  here we send to ml
-//     const result = await checkContent(text, image);
+//     console.log("Cloudinary URL:", image);
+//     console.log("Text content:", text);
 
-//     console.log("ML Result:", result);
+//     // it check ML checks
+//     const textResult = checkText(text);
+//     const imageResult = await checkImage(image);
 
+//     // for final status
 //     let status = "safe";
 
-//     if (result.text === "flagged" || result.image === "flagged") {
+//     if (textResult === "flagged" || imageResult === "flagged") {
 //       status = "flagged";
 //     }
 
-//     if (result.text === "rejected" || result.image === "rejected") {
+//     if (textResult === "rejected" || imageResult === "rejected") {
 //       return res.status(400).json({
 //         message: "Content not appropriate",
 //       });
 //     }
 
+//     // for save post
 //     const post = await Post.create({
-//       user: req.user.id,
+//       user: req.user?.id,
 //       text,
 //       image,
 //       status,
 //     });
 
 //     res.status(201).json({
-//       success: true,
-//       message: "Post created",
+//       message: "Post created successfully",
 //       post,
 //     });
 
@@ -107,10 +58,66 @@ const createPost = async (req, res) => {
 //   }
 // };
 
+//replace above by this when i integrate ml model
+
+const createPost = async (req, res) => {
+  try {
+    const { text } = req.body;
+    const image = req.file?.path;
+
+    console.log("Image URL:", image);
+
+    if (!text && !image) {
+      return res.status(400).json({
+        message: "Post must contain text or image",
+      });
+    }
+
+    //  Send to ML
+    const moderation = await moderateContent(text, image);
+    console.log("ML Result:", moderation);
+
+    let status = "safe";
+
+    if (moderation.status === "REVIEW") {
+      status = "flagged";
+    }
+
+    if (moderation.status === "REJECTED") {
+      return res.status(400).json({
+        message: "Content not appropriate",
+      });
+    }
+
+    //  Save post ALWAYS (except rejected)
+    const post = await Post.create({
+      user: req.user.id,
+      text,
+      image,
+      status,
+    });
+
+    res.status(201).json({
+      success: true,
+      message:
+        status === "safe"
+          ? "Post published"
+          : "Post sent for review",
+      post,
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Error creating post",
+    });
+  }
+};
+
 const getFeed = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = 5;
+    const limit = 10;
 
     const posts = await Post.find({ status: "safe" }).populate("user")
       .skip((page - 1) * limit)
@@ -130,7 +137,7 @@ const getFeed = async (req, res) => {
 
 const getFlaggedPosts = async (req, res) => {
   try {
-    const posts = await Post.find({ status: "flagged" });
+    const posts = await Post.find({ status: "flagged" }).populate("user");
 
     res.status(200).json({
       success: true,
@@ -145,34 +152,26 @@ const getFlaggedPosts = async (req, res) => {
 const updatePostStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { action } = req.body;
+    const { status } = req.body;
 
-    let update = {};
-
-    if (action === "accept") {
-      update.status = "safe";
-    } else if (action === "delete") {
-      await Post.findByIdAndDelete(id);
-
-      return res.json({
-        message: "Post deleted",
-      });
-    } else {
+    if (!["safe", "flagged", "rejected"].includes(status)) {
       return res.status(400).json({
-        message: "Invalid action",
+        message: "Invalid status value",
       });
     }
+    const post = await Post.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
 
-    const post = await Post.findByIdAndUpdate(id, update, { new: true });
-
-    res.json({
-      message: "Post approved",
+    res.status(200).json({
+      message: "Post updated",
       post,
     });
-
   } catch (error) {
     res.status(500).json({
-      message: "Error moderating post",
+      message: "Error updating post",
     });
   }
 };
