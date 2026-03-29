@@ -11,6 +11,8 @@ import { Navigate } from 'react-router-dom';
 import CreatePost from './pages/createpost.jsx';
 import Feed from './pages/feed.jsx';
 import ModeratorDashboard from './pages/Moderator.jsx';
+import Profile from './pages/myprofile.jsx';
+import EditProfile from './pages/editprofile.jsx';
 
 function App() {
   getCurrentUser();
@@ -26,6 +28,8 @@ function App() {
         <Route path='/create-post' element={userData ? <CreatePost/> : <Navigate to='/login' /> } />
         <Route path='/feed' element={userData ? <Feed/> : <Navigate to='/login' /> } />
         <Route path='/Moderator' element={userData ? <ModeratorDashboard/> : <Navigate to='/login' /> } />
+        <Route path='/profile' element={userData ? <Profile/> : <Navigate to='/login' /> } />
+        <Route path='/edit-profile' element={userData ? <EditProfile/> : <Navigate to='/login' /> } />
       </Routes>
 
       <Toaster
