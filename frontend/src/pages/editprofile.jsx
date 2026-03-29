@@ -4,7 +4,8 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import { serverUrl } from "../main.jsx";
 import { FaArrowLeft } from "react-icons/fa";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { setUserData } from "../redux/userSlice.js";
 
 function EditProfile() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ function EditProfile() {
   const [loading, setLoading] = useState(false);
 
   const {userData}=useSelector((state)=>state.user)
+  const dispatch=useDispatch()
 
   // get user data
   useEffect(() => {
@@ -37,11 +39,13 @@ function EditProfile() {
 
       const res = await axios.put(`${serverUrl}/api/v1/users/updateProfile`,{ newEmail:email,newName:name },{ withCredentials: true });
 
+      console.log(res.data);
+
       toast.success(res.data?.message || "Profile updated");
 
       // update localStorage
       const updatedUser = res.data.user;
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      dispatch(setUserData(updatedUser));
 
       navigate("/profile");
 

@@ -1,6 +1,7 @@
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import Nav from "../component/Nav.jsx";
+import Footer from "../component/footer.jsx";
 
 
 function Home() {
@@ -122,9 +123,7 @@ function Home() {
       </section>
 
       {/* FOOTER */}
-      <footer className="text-center py-6 border-t border-gray-800 text-gray-500">
-        © 2026 SafeStream. All rights reserved.
-      </footer>
+        <Footer/>
     </div>
   );
 }
