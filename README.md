@@ -1,29 +1,16 @@
-# SafeStream 🛡️
-AI-Powered Content Moderation Platform
+# React + Vite
 
-## What is SafeStream?
-SafeStream automatically detects toxic text and NSFW 
-images using AI — keeping your feed clean and safe.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Team
-| Member | Role |
-|--------|------|
-| TBD    | Backend |
-| TBD    | AI/ML Engineer |
-| TBD    | Frontend Developer |
-| TBD    | Database + DevOps |
-| TBD    | Docs + Testing |
+Currently, two official plugins are available:
 
-## Tech Stack
-- Backend: Node.js
-- Frontend: React.js
-- Database: MongoDB
-- AI Text: Perspective API
-- AI Image: Google Vision API
-- Queue: Celery + Redis
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## Project Structure
-SafeStream/
-├── backend/     → Node server
-├── frontend/    → React app
-└── docs/        → Documentation# SafeStream 
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
