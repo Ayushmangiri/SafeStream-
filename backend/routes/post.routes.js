@@ -7,7 +7,8 @@ import {isLoggedIn,isAdmin} from "../middleware/auth.middleware.js";
 const router = express.Router();
 
 router.post("/create", isLoggedIn, upload.single("image"), createPost);
-router.get("/feed",  getFeed);
+router.get("/feed",isLoggedIn,  getFeed);
+
 
 // admin routes
 router.get("/moderation", isLoggedIn, isAdmin, getFlaggedPosts);

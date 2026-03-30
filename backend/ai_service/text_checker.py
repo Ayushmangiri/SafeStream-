@@ -1,94 +1,89 @@
-"""
-Text Moderation Module
-
-This module handles text content moderation using a pre-trained toxic-bert model from HuggingFace.
-It detects toxic/abusive language and returns a confidence score and status.
-
-Decision Logic:
-- Score 0.0 - 0.3: SAFE (auto approve)
-- Score 0.3 - 0.7: REVIEW (human moderator)
-- Score 0.7 - 1.0: TOXIC (auto reject)
-"""
-
+import asyncio
 from transformers import pipeline
-import logging
 
-# Initialize the toxicity classifier
-# Using 'unitary/toxic-bert' model for toxicity detection
 toxicity_classifier = pipeline(
     "text-classification",
     model="unitary/toxic-bert",
-    tokenizer="unitary/toxic-bert",
-    return_all_scores=True
+    top_k=None
 )
 
-logger = logging.getLogger(__name__)
+#Context-aware phrases (SAFE slang)
+SAFE_PHRASES = [
+    "killed it",
+    "kill it",
+    "you killed it",
+    "that killed",
+]
+
+# Dangerous phrases (REVIEW)
+DANGEROUS_PHRASES = [
+    "kill you",
+    "i will kill",
+    "die now",
+    "go die",
+    "i will murder",
+    "shoot you"
+]
+
 
 async def check_text(text: str) -> dict:
-    """
-    Check the toxicity of the given text.
 
-    Args:
-        text (str): The text content to moderate.
-
-    Returns:
-        dict: A dictionary containing:
-            - "score": float (0.0 to 1.0) - confidence score of toxicity
-            - "status": str - "SAFE", "REVIEW", or "TOXIC"
-            - "error": str (optional) - error message if any
-
-    Examples:
-        >>> await check_text("This is a safe message.")
-        {"score": 0.05, "status": "SAFE"}
-
-        >>> await check_text("You are an idiot!")
-        {"score": 0.85, "status": "TOXIC"}
-
-        >>> await check_text("")  # Empty text
-        {"score": 0.0, "status": "SAFE", "error": "Empty text provided"}
-    """
-    try:
-        if not text or not text.strip():
-            return {
-                "score": 0.0,
-                "status": "SAFE",
-                "error": "Empty text provided"
-            }
-
-        # Get predictions from the model
-        predictions = toxicity_classifier(text)
-
-        # Extract the toxicity score
-        # The model returns scores for different labels, we take the 'toxic' label
-        toxic_score = 0.0
-        if isinstance(predictions, list) and len(predictions) > 0:
-            result = predictions[0] if isinstance(predictions[0], list) else predictions
-            if isinstance(result, list):
-                for pred in result:
-                    if pred.get('label', '').lower() == 'toxic':
-                        toxic_score = pred.get('score', 0.0)
-                        break
-            else:
-                if result.get('label', '').lower() == 'toxic':
-                    toxic_score = result.get('score', 0.0)
-
-        # Determine status based on score
-        if toxic_score < 0.3:
-            status = "SAFE"
-        elif toxic_score < 0.7:
-            status = "REVIEW"
-        else:
-            status = "TOXIC"
-
+    #Empty input
+    if not text or not text.strip():
         return {
-            "score": round(toxic_score, 3),
-            "status": status
+            "status": "SAFE",
+            "score": 0.0,
+            "reason": "Empty text"
         }
 
-    except Exception as e:
-        logger.error(f"Error in text moderation: {str(e)}")
+    text_lower = text.lower()
+
+    # Step 1: Check SAFE slang (avoid false positives)
+    if any(phrase in text_lower for phrase in SAFE_PHRASES):
         return {
-            "score": 0.0,
-            "status": "REVIEW",  # Default to review on error
-            "error": f"Failed to moderate text: {str(e)}"
+            "status": "SAFE",
+            "score": 0.1,
+            "reason": "Casual/slang expression detected"
+        }
+
+    #Step 2: Check clearly harmful phrases
+    if any(phrase in text_lower for phrase in DANGEROUS_PHRASES):
+        return {
+            "status": "REVIEW",
+            "score": 0.9,
+            "reason": "Explicit harmful or violent intent"
+        }
+
+    #Step 3: Run ML model
+    try:
+        loop = asyncio.get_running_loop()
+        predictions = await loop.run_in_executor(None, toxicity_classifier, text)
+
+        result = predictions[0] if isinstance(predictions[0], list) else predictions
+
+        toxic_keywords = [
+            "toxic", "severe_toxic", "obscene",
+            "insult", "threat", "identity_hate"
+        ]
+
+        max_score = 0.0
+
+        for pred in result:
+            label = pred["label"].lower()
+            if any(k in label for k in toxic_keywords):
+                max_score = max(max_score, pred["score"])
+
+        status = "REVIEW" if max_score >= 0.5 else "SAFE"
+
+        return {
+            "status": status,
+            "score": round(max_score, 4),
+            "reason": "Toxic content detected" if status == "REVIEW" else "Safe text"
+        }
+
+    except Exception:
+        return {
+            "status": "REVIEW",
+            "score": 1.0,
+            "reason": "Model error - sent to review"
         }

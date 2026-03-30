@@ -1,57 +1,57 @@
 import Post from "../model/Post.model.js";
-import { checkText, checkImage } from "../services/ml.services.js";
+import { moderateContent } from "../services/ml.services.js";
 
+/**
+ * Creates a new post with AI-powered content moderation.
+ */
 const createPost = async (req, res) => {
   try {
     const { text } = req.body;
-    const image = req.file?.path;
+    const image = req.file?.path; // This is the Cloudinary URL from multer
 
-
-
-    //  validation
     if (!text && !image) {
       return res.status(400).json({
-        message: "Post must contain text or image",
+        success: false,
+        message: "Post must contain either text or an image",
       });
     }
 
-    console.log("Cloudinary URL:", image);
-    console.log("Text content:", text);
+    // 1. Moderate with AI Service (Pass Cloudinary URL directly)
+    const moderation = await moderateContent(text, image);
+    
+    // 2. Determine Database Status
+    const status = moderation.status === "REVIEW" ? "flagged" : "safe";
+    const postTime = new Date().toLocaleString();
 
-    // it check ML checks
-    const textResult = checkText(text);
-    const imageResult = await checkImage(image);
-
-    // for final status
-    let status = "safe";
-
-    if (textResult === "flagged" || imageResult === "flagged") {
-      status = "flagged";
+    // 🔴 Red logging for Moderation check with icons
+    if (status === "flagged") {
+      console.log(`\x1b[31m⚠️ [MODERATION ALERT] [${postTime}]: Post from user ${req.user.id} sent for manual review...\x1b[0m`);
+    } else {
+      console.log(`\x1b[32m✅ [SAFE CONTENT] [${postTime}]: Post published immediately.\x1b[0m`);
     }
 
-    if (textResult === "rejected" || imageResult === "rejected") {
-      return res.status(400).json({
-        message: "Content not appropriate",
-      });
-    }
-
-    // for save post
+    // 3. Save to Database (All posts are saved, visibility depends on status)
     const post = await Post.create({
-      user: req.user?.id,
+      user: req.user.id,
       text,
       image,
       status,
+      moderationResponse: moderation 
     });
 
     res.status(201).json({
-      message: "Post created successfully",
+      success: status === "safe", // true for safe, false for flagged
+      message: status === "safe" 
+        ? "Post published successfully!" 
+        : "Post flagged and sent for moderation review.",
       post,
     });
 
   } catch (error) {
-    console.log(error);
+    console.error("[CREATE POST ERROR]:", error);
     res.status(500).json({
-      message: "Error creating post",
+      success: false,
+      message: "An internal error occurred while creating your post",
     });
   }
 };
@@ -59,9 +59,9 @@ const createPost = async (req, res) => {
 const getFeed = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = 5;
+    const limit = 10;
 
-    const posts = await Post.find({ status: "safe" })
+    const posts = await Post.find({ status: "safe" }).populate("user")
       .skip((page - 1) * limit)
       .limit(limit)
       .sort({ createdAt: -1 });
@@ -79,7 +79,7 @@ const getFeed = async (req, res) => {
 
 const getFlaggedPosts = async (req, res) => {
   try {
-    const posts = await Post.find({ status: "flagged" });
+    const posts = await Post.find({ status: "flagged" }).populate("user");
 
     res.status(200).json({
       success: true,

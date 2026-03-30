@@ -22,12 +22,12 @@ const registerUser = async (req, res) => {
     }
 
     //  hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    //  const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
       name,
       email,
-      password: hashedPassword,
+      password,
     });
 
     //create token
@@ -92,7 +92,7 @@ const login = async (req, res) => {
     );
     const cookieOptions = {
       httpOnly: true,
-      secure: true,
+      secure: false,
       maxAge: 24 * 60 * 60 * 1000,
     };
     res.cookie("token", token, cookieOptions);
@@ -104,6 +104,7 @@ const login = async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
+        email: user.email,
         role: user.role,
       },
     });
