@@ -1,50 +1,108 @@
 import Post from "../model/Post.model.js";
-import { checkText, checkImage } from "../services/ml.services.js";
+import { checkText, checkImage } from "../services/ml.services.js"; //include here checkContent here
+import { moderateContent } from "../services/ml.services.js"; //include here moderateContent here
+
+
+// const createPost = async (req, res) => {
+//   try {
+//     const { text } = req.body;
+//     const image = req.file?.path;
+
+//     console.log("Image URL:", image);
+
+//     //  validation
+//     if (!text && !image) {
+//       return res.status(400).json({
+//         message: "Post must contain text or image",
+//       });
+//     }
+
+//     console.log("Cloudinary URL:", image);
+//     console.log("Text content:", text);
+
+//     // it check ML checks
+//     const textResult = checkText(text);
+//     const imageResult = await checkImage(image);
+
+//     // for final status
+//     let status = "safe";
+
+//     if (textResult === "flagged" || imageResult === "flagged") {
+//       status = "flagged";
+//     }
+
+//     if (textResult === "rejected" || imageResult === "rejected") {
+//       return res.status(400).json({
+//         message: "Content not appropriate",
+//       });
+//     }
+
+//     // for save post
+//     const post = await Post.create({
+//       user: req.user?.id,
+//       text,
+//       image,
+//       status,
+//     });
+
+//     res.status(201).json({
+//       message: "Post created successfully",
+//       post,
+//     });
+
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({
+//       message: "Error creating post",
+//     });
+//   }
+// };
+
+//replace above by this when i integrate ml model
 
 const createPost = async (req, res) => {
   try {
     const { text } = req.body;
     const image = req.file?.path;
 
+    console.log("Image URL:", image);
 
-
-    //  validation
     if (!text && !image) {
       return res.status(400).json({
         message: "Post must contain text or image",
       });
     }
 
-    console.log("Cloudinary URL:", image);
-    console.log("Text content:", text);
+    //  Send to ML
+    const moderation = await moderateContent(text, image);
+    console.log("ML Result:", moderation);
 
-    // it check ML checks
-    const textResult = checkText(text);
-    const imageResult = await checkImage(image);
-
-    // for final status
     let status = "safe";
 
-    if (textResult === "flagged" || imageResult === "flagged") {
+    if (moderation.status === "REVIEW") {
       status = "flagged";
     }
 
-    if (textResult === "rejected" || imageResult === "rejected") {
+    if (moderation.status === "REJECTED") {
       return res.status(400).json({
         message: "Content not appropriate",
       });
     }
 
-    // for save post
+    //  Save post ALWAYS (except rejected)
     const post = await Post.create({
-      user: req.user?.id,
+      user: req.user.id,
       text,
       image,
       status,
     });
 
     res.status(201).json({
-      message: "Post created successfully",
+      success: true,
+      message:
+        status === "safe"
+          ? "Post published"
+          : "Post sent for review",
       post,
     });
 
@@ -59,9 +117,9 @@ const createPost = async (req, res) => {
 const getFeed = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = 5;
+    const limit = 10;
 
-    const posts = await Post.find({ status: "safe" })
+    const posts = await Post.find({ status: "safe" }).populate("user")
       .skip((page - 1) * limit)
       .limit(limit)
       .sort({ createdAt: -1 });
@@ -79,7 +137,7 @@ const getFeed = async (req, res) => {
 
 const getFlaggedPosts = async (req, res) => {
   try {
-    const posts = await Post.find({ status: "flagged" });
+    const posts = await Post.find({ status: "flagged" }).populate("user");
 
     res.status(200).json({
       success: true,

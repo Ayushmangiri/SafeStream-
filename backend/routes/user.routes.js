@@ -8,7 +8,7 @@ router.post("/register", registerUser);
 router.post("/login", login);
 router.get("/profile", isLoggedIn, getMe);
 router.get("/logout", isLoggedIn, logoutUser);
-router.post("/updateProfile",isLoggedIn,updateProfile);
+router.put("/updateProfile",isLoggedIn,updateProfile);
 router.get("/admin/users", isLoggedIn, isAdmin, getAllUsers);
 router.delete("/admin/users/:id", isLoggedIn, isAdmin, deleteUserByAdmin);
 
