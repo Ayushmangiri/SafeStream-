@@ -5,7 +5,7 @@ import torch
 from PIL import Image
 from transformers import CLIPProcessor, CLIPModel
 
-# Load model
+
 clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
 clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
@@ -40,13 +40,11 @@ async def fetch_image(image_url: str) -> Image.Image:
         "Accept": "image/*"
     }
 
-    #  Retry logic (important)
     for attempt in range(2):
         try:
             response = requests.get(image_url, headers=headers, timeout=8)
             response.raise_for_status()
 
-            #  Ensure it's actually an image
             if "image" not in response.headers.get("Content-Type", ""):
                 raise ValueError("URL did not return an image")
 
@@ -60,7 +58,6 @@ async def fetch_image(image_url: str) -> Image.Image:
 
 async def check_image(image_url: str) -> dict:
 
-    #  Empty input
     if not image_url or not image_url.strip():
         return {
             "status": "SAFE",
@@ -68,7 +65,6 @@ async def check_image(image_url: str) -> dict:
             "reason": "No image provided"
         }
 
-    #  Invalid URL
     if not image_url.startswith("http"):
         return {
             "status": "ERROR",
@@ -76,7 +72,6 @@ async def check_image(image_url: str) -> dict:
             "reason": "Invalid image URL"
         }
 
-    #  Fetch image
     try:
         image = await fetch_image(image_url)
 
@@ -89,7 +84,6 @@ async def check_image(image_url: str) -> dict:
             "reason": "Image could not be processed"
         }
 
-    #  Run CLIP
     try:
         loop = asyncio.get_running_loop()
         score = await loop.run_in_executor(None, _run_clip, image)

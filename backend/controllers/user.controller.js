@@ -21,8 +21,6 @@ const registerUser = async (req, res) => {
       });
     }
 
-    //  hash password
-    //  const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
       name,
@@ -30,7 +28,6 @@ const registerUser = async (req, res) => {
       password,
     });
 
-    //create token
     const token = crypto.randomBytes(32).toString("hex");
     console.log("Verification Token:", token);
     user.verificationToken = token;
@@ -80,7 +77,7 @@ const login = async (req, res) => {
       });
     }
 
-    //
+  
 
     const token = jwt.sign(
       { id: user._id, role: user.role },

@@ -11,14 +11,11 @@ from text_checker import check_text
 from image_checker import check_image
 from ai_moderator import run_ai_moderation
 
-#LOGGING
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-#APP
 app = FastAPI(title="SafeStream AI Service", version="2.0.0")
 
-#CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -27,13 +24,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-#REQUEST MODEL
 class CombinedRequest(BaseModel):
     text: str | None = None
     image_url: str | None = None
 
 
-#UNIFIED ENDPOINT
 @app.post("/moderate")
 async def moderate(request: CombinedRequest):
     try:

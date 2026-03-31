@@ -1,13 +1,11 @@
 import Post from "../model/Post.model.js";
 import { moderateContent } from "../services/ml.services.js";
 
-/**
- * Creates a new post with AI-powered content moderation.
- */
+
 const createPost = async (req, res) => {
   try {
     const { text } = req.body;
-    const image = req.file?.path; // This is the Cloudinary URL from multer
+    const image = req.file?.path; 
 
     if (!text && !image) {
       return res.status(400).json({
@@ -16,21 +14,17 @@ const createPost = async (req, res) => {
       });
     }
 
-    // 1. Moderate with AI Service (Pass Cloudinary URL directly)
     const moderation = await moderateContent(text, image);
     
-    // 2. Determine Database Status
     const status = moderation.status === "REVIEW" ? "flagged" : "safe";
     const postTime = new Date().toLocaleString();
 
-    // 🔴 Red logging for Moderation check with icons
     if (status === "flagged") {
-      console.log(`\x1b[31m⚠️ [MODERATION ALERT] [${postTime}]: Post from user ${req.user.id} sent for manual review...\x1b[0m`);
+      console.log(`\x1b[31m[MODERATION ALERT] [${postTime}]: Post from user ${req.user.id} sent for manual review...\x1b[0m`);
     } else {
-      console.log(`\x1b[32m✅ [SAFE CONTENT] [${postTime}]: Post published immediately.\x1b[0m`);
+      console.log(`\x1b[32m [SAFE CONTENT] [${postTime}]: Post published immediately.\x1b[0m`);
     }
 
-    // 3. Save to Database (All posts are saved, visibility depends on status)
     const post = await Post.create({
       user: req.user.id,
       text,
@@ -40,7 +34,7 @@ const createPost = async (req, res) => {
     });
 
     res.status(201).json({
-      success: status === "safe", // true for safe, false for flagged
+      success: status === "safe", 
       message: status === "safe" 
         ? "Post published successfully!" 
         : "Post flagged and sent for moderation review.",
