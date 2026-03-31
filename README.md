@@ -14,7 +14,7 @@ SafeStream- is a modern web application designed to create a safer online enviro
 | :--- | :--- |
 | **Frontend** | Aman Soni |
 | **Node Backend** | Hari Om |
-| **AIML & DB** | Ayushman Giri & Radhika |
+| **AIML & Deployment** | Ayushman Giri & Radhika |
 
 ---
 
@@ -96,6 +96,35 @@ npm install
 ```bash
 npm run dev
 ```
+
+---
+
+##  Run with Docker (Recommended)
+
+You can run the entire SafeStream- platform using Docker and Docker Compose. This starts the backend, frontend, and AI service automatically.
+
+### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
+
+### Steps
+1. **Prepare Environment Variables**:
+   Ensure you have a `.env` file in the `backend/` directory as described in the [Backend Setup](#2-backend-setup-nodejs) section.
+
+2. **Build and Start**:
+   From the root directory, run:
+   ```bash
+   docker-compose up --build
+   ```
+
+3. **Access the Services**:
+   - **Frontend**: [http://localhost:5173](http://localhost:5173)
+   - **Backend API**: [http://localhost:4000](http://localhost:4000)
+   - **AI Service**: [http://localhost:8001](http://localhost:8001)
+
+4. **Stop the Services**:
+   ```bash
+   docker-compose down
+   ```
 
 ---
 

@@ -13,7 +13,8 @@ import axios from "axios";
 
 export const moderateContent = async (text, imageUrl) => {
   try {
-    const response = await axios.post("http://127.0.0.1:8001/moderate", {
+    const aiServiceUrl = process.env.AI_SERVICE_URL || "http://127.0.0.1:8001";
+    const response = await axios.post(`${aiServiceUrl}/moderate`, {
       text: text || null,
       image_url: imageUrl || null,
     });
